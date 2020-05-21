@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+get-refspecs() {
+        INPUT_REMOTENAME="${1}"
+        git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
+        | while IFS=":" read -r LOCAL REMOTENAME REMOTEREF
+        do
+                if [ "${REMOTENAME}" != "${INPUT_REMOTENAME}" ]; then
+                        continue
+                fi
+                if [ -z "${REMOTENAME}" ]; then
+                        continue
+                fi
+                if [ "${LOCAL}" == "${CURRENT_BRANCH}" ]; then
+                        echo "${REMOTEREF}"
+                        continue
+                fi
+                echo "${LOCAL}:${REMOTEREF}"
+        done
+}
+
+for ORIGIN in $(git remote); do
+        get-refspecs "${ORIGIN}" | xargs --verbose git fetch "${ORIGIN}"
+done
+
+if [ "${CURRENT_BRANCH}" != "HEAD" ]; then
+        UPSTREAM=$(git branch --list --format "%(upstream)" "${CURRENT_BRANCH}")
+        if [ -n "$UPSTREAM" ]; then
+                git merge --ff-only "${UPSTREAM}"
+        fi
+fi
