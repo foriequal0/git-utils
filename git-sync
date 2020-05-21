@@ -2,34 +2,25 @@
 
 set -euo pipefail
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
 get-refspecs() {
-        INPUT_REMOTENAME="${1}"
+        INPUT_REMOTE="${1}"
         git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
-        | while IFS=":" read -r LOCAL REMOTENAME REMOTEREF
+        | while IFS=":" read -r LOCAL REMOTE REMOTEREF
         do
-                if [ "${REMOTENAME}" != "${INPUT_REMOTENAME}" ]; then
+                if [ "${REMOTE}" != "${INPUT_REMOTE}" ]; then
                         continue
                 fi
-                if [ -z "${REMOTENAME}" ]; then
+                if [ -z "${REMOTEREF}" ]; then
                         continue
                 fi
-                if [ "${LOCAL}" == "${CURRENT_BRANCH}" ]; then
-                        echo "${REMOTEREF}"
+                if ! git show-ref --verify --quiet "refs/remotes/${REMOTE}/${REMOTEREF}"; then
                         continue
                 fi
                 echo "${LOCAL}:${REMOTEREF}"
         done
 }
 
-for ORIGIN in $(git remote); do
-        get-refspecs "${ORIGIN}" | xargs --verbose git fetch "${ORIGIN}"
+for REMOTE in $(git remote); do
+        git remote prune "${REMOTE}"
+        get-refspecs "${REMOTE}" | xargs --verbose git fetch "${REMOTE}" --update-head-ok
 done
-
-if [ "${CURRENT_BRANCH}" != "HEAD" ]; then
-        UPSTREAM=$(git branch --list --format "%(upstream)" "${CURRENT_BRANCH}")
-        if [ -n "$UPSTREAM" ]; then
-                git merge --ff-only "${UPSTREAM}"
-        fi
-fi
