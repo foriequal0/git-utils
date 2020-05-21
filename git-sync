@@ -25,4 +25,4 @@ for REMOTE in $(git remote); do
         get-refspecs "${REMOTE}" | xargs --verbose git fetch "${REMOTE}" --update-head-ok
 done
 
-git trim
+git trim --no-update
