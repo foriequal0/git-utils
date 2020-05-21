@@ -24,3 +24,5 @@ for REMOTE in $(git remote); do
         git remote prune "${REMOTE}"
         get-refspecs "${REMOTE}" | xargs --verbose git fetch "${REMOTE}" --update-head-ok
 done
+
+git trim
