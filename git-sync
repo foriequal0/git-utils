@@ -2,18 +2,23 @@
 
 set -euo pipefail
 
+HEAD=$(git rev-parse --abbrev-ref HEAD)
+
 get-refspecs() {
         INPUT_REMOTE="${1}"
         git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
         | while IFS=":" read -r LOCAL REMOTE REMOTEREF
         do
+                if [ "${LOCAL}" == "${HEAD}" ]; then
+                        continue
+                fi
                 if [ "${REMOTE}" != "${INPUT_REMOTE}" ]; then
                         continue
                 fi
                 if [ -z "${REMOTEREF}" ]; then
                         continue
                 fi
-                if ! git show-ref --verify --quiet "refs/remotes/${REMOTE}/${REMOTEREF}"; then
+                if ! git show-ref --verify --quiet "refs/remotes/${INPUT_REMOTE}/${REMOTEREF}"; then
                         continue
                 fi
                 echo "${LOCAL}:${REMOTEREF}"
@@ -21,8 +26,12 @@ get-refspecs() {
 }
 
 for REMOTE in $(git remote); do
-        git remote prune "${REMOTE}"
-        get-refspecs "${REMOTE}" | xargs --verbose git fetch "${REMOTE}" --update-head-ok
+        get-refspecs "${REMOTE}" | xargs --verbose git fetch --prune "${REMOTE}" $(git config "remote.${REMOTE}.fetch")
 done
+
+UPSTREAM=$(git branch --list --format "%(upstream)" "${HEAD}")
+if [ -n "${UPSTREAM}" ]; then
+        git merge --ff-only "${UPSTREAM}"
+fi
 
 git trim --no-update
