@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-## git-fixup: fixup and rebase interactively,
-## requires: fzf
+# git-sync: pull, prune, trim all branches.
+# requires: git-trim
 
 set -euo pipefail
 
