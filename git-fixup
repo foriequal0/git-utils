@@ -29,8 +29,8 @@ if [ -z "${COMMITS}" ]; then
         COMMITS=$(git log --oneline HEAD~1..HEAD)
 fi
 select-commit() {
-        fzf --preview 'git show --color always $(echo "{}" | cut -d " " -f 1)' \
-        | cut -d " " -f 1
+        fzf --preview 'git show --color=always {1}' --preview-window up:80% \
+        | awk '{ print $1 }'
 }
 FIXUP=$(echo "${COMMITS}" | select-commit "${COMMITS}")
 
