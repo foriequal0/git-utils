@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-HEAD=$(git rev-parse --abbrev-ref HEAD)
+CURRENT=$(git branch --show-current)
 
 get-refspecs() {
         INPUT_REMOTE="${1}"
         git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
         | while IFS=":" read -r LOCAL REMOTE REMOTEREF
         do
-                if [ "${LOCAL}" == "${HEAD}" ]; then
+                if [ "${LOCAL}" == "${CURRENT}" ]; then
                         continue
                 fi
                 if [ "${REMOTE}" != "${INPUT_REMOTE}" ]; then
@@ -29,8 +29,8 @@ for REMOTE in $(git remote); do
         get-refspecs "${REMOTE}" | xargs --verbose git fetch --prune "${REMOTE}" $(git config "remote.${REMOTE}.fetch")
 done
 
-UPSTREAM=$(git branch --list --format "%(upstream)" "${HEAD}")
-if [ -n "${UPSTREAM}" ]; then
+if [ -n "${CURRENT}" ]; then
+        UPSTREAM=$(git branch --list --format "%(upstream)" "${CURRENT}")
         git merge --ff-only "${UPSTREAM}"
 fi
 
