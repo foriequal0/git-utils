@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -xeo pipefail
+
+BASE=${1:-master}
+
+if git diff --cached --quiet; then
+        echo "Empty index"
+        exit -1
+fi
+
+CURRENT=$(git branch --show-current)
+if [ -z "${CURRENT}" ]; then
+        echo "Detached head"
+        exit -1
+fi
+
+if ! git merge-base --is-ancestor "${BASE}" HEAD; then
+        echo "${BASE} is not an ancestor of HEAD"
+        exit -1
+fi
+
+MERGE_BASE=$(git merge-base "${BASE}" HEAD)
+COMMITS=$(git log --oneline "$MERGE_BASE"..HEAD)
+if [ -z "${COMMITS}" ]; then
+        COMMITS=$(git log --oneline HEAD~1..HEAD)
+fi
+COMMIT=$(echo "$COMMITS" | fzf | awk '{print $1}')
+
+git commit --fixup "$COMMIT"
+git rebase -i "$MERGE_BASE"
