@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+## git-fixup: fixup and rebase interactively.
+## requires fzf
+
 set -xeo pipefail
 
 BASE=${1:-master}
@@ -25,7 +28,7 @@ COMMITS=$(git log --oneline "$MERGE_BASE"..HEAD)
 if [ -z "${COMMITS}" ]; then
         COMMITS=$(git log --oneline HEAD~1..HEAD)
 fi
-COMMIT=$(echo "$COMMITS" | fzf | awk '{print $1}')
+FIXUP=$(echo "$COMMITS" | fzf | awk '{print $1}')
 
-git commit --fixup "$COMMIT"
+git commit --fixup "$FIXUP"
 git rebase -i "$MERGE_BASE"
