@@ -33,8 +33,10 @@ for REMOTE in $(git remote); do
 done
 
 if [ -n "${CURRENT}" ]; then
-        UPSTREAM=$(git branch --list --format "%(upstream)" "${CURRENT}")
-        git merge --ff-only "${UPSTREAM}"
+        UPSTREAM=$(git branch --list --format "%(upstream:short)" "${CURRENT}")
+        echo "Fast forward ${CURRENT} to ${UPSTREAM}"
+        git merge --ff-only "${UPSTREAM}" || true
 fi
 
+echo "git trim"
 git trim --no-update
