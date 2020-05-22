@@ -31,4 +31,4 @@ fi
 FIXUP=$(echo "$COMMITS" | fzf | awk '{print $1}')
 
 git commit --fixup "$FIXUP"
-git rebase -i "$MERGE_BASE"
+git rebase -i --autosquash "$MERGE_BASE"
