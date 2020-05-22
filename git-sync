@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+## git-fixup: fixup and rebase interactively,
+## requires: fzf
+
 set -euo pipefail
 
 CURRENT=$(git branch --show-current)
