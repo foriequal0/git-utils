@@ -3,7 +3,7 @@
 ## git-fixup: fixup and rebase interactively.
 ## requires fzf
 
-set -xeo pipefail
+set -euo pipefail
 
 BASE=${1:-master}
 
@@ -28,7 +28,11 @@ COMMITS=$(git log --oneline "$MERGE_BASE"..HEAD)
 if [ -z "${COMMITS}" ]; then
         COMMITS=$(git log --oneline HEAD~1..HEAD)
 fi
-FIXUP=$(echo "$COMMITS" | fzf | awk '{print $1}')
+select-commit() {
+        fzf --preview 'git show --color always $(echo "{}" | cut -d " " -f 1)' \
+        | cut -d " " -f 1
+}
+FIXUP=$(echo "${COMMITS}" | select-commit "${COMMITS}")
 
-git commit --fixup "$FIXUP"
-git rebase -i --autosquash --autostash "$MERGE_BASE"
+git commit --fixup "${FIXUP}"
+git rebase -i --autosquash --autostash "${MERGE_BASE}"
