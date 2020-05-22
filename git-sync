@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 
-# git-sync: pull, prune, trim all branches.
-# requires: git-trim
-
 set -euo pipefail
 
 CURRENT=$(git branch --show-current)
 
-get-refspecs() {
+do-ff() {
         local INPUT_REMOTE="${1}"
-        local LOCAL REMOTE REMOTEREF
-        git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
-        | while IFS=":" read -r LOCAL REMOTE REMOTEREF
+        local LOCAL REMOTE UPSTREAM
+        git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:short)" \
+        | while IFS=":" read -r LOCAL REMOTE UPSTREAM
         do
                 if [ "${LOCAL}" == "${CURRENT}" ]; then
                         continue
@@ -19,23 +16,29 @@ get-refspecs() {
                 if [ "${REMOTE}" != "${INPUT_REMOTE}" ]; then
                         continue
                 fi
-                if [ -z "${REMOTEREF}" ]; then
+                if [ -z "${UPSTREAM}" ]; then
                         continue
                 fi
-                if ! git show-ref --verify --quiet "refs/remotes/${INPUT_REMOTE}/${REMOTEREF}"; then
+                if ! git show-ref --quiet "${UPSTREAM}"; then
                         continue
                 fi
-                echo "${LOCAL}:${REMOTEREF}"
+                if ! git merge-base --is-ancestor "${LOCAL}" "${UPSTREAM}"; then
+                        echo "Not possible to fast-forward branch '${LOCAL}' to '${UPSTREAM}'"
+                        continue
+                fi
+                git branch --force "${LOCAL}" "${UPSTREAM}"
         done
 }
 
+git fetch --all --prune
+
 for REMOTE in $(git remote); do
-        get-refspecs "${REMOTE}" | xargs --verbose git fetch --prune "${REMOTE}" $(git config "remote.${REMOTE}.fetch")
+        do-ff "${REMOTE}"
 done
 
 if [ -n "${CURRENT}" ]; then
         UPSTREAM=$(git branch --list --format "%(upstream:short)" "${CURRENT}")
-        echo "Fast forward ${CURRENT} to ${UPSTREAM}"
+        echo "Fast-forward branch '${CURRENT}' to '${UPSTREAM}'"
         git merge --ff-only "${UPSTREAM}" || true
 fi
 
