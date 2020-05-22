@@ -8,7 +8,8 @@ set -euo pipefail
 CURRENT=$(git branch --show-current)
 
 get-refspecs() {
-        INPUT_REMOTE="${1}"
+        local INPUT_REMOTE="${1}"
+        local LOCAL REMOTE REMOTEREF
         git branch --list --format "%(refname:short):%(upstream:remotename):%(upstream:lstrip=3)" \
         | while IFS=":" read -r LOCAL REMOTE REMOTEREF
         do
