@@ -38,8 +38,10 @@ done
 
 if [ -n "${CURRENT}" ]; then
         UPSTREAM=$(git branch --list --format "%(upstream:short)" "${CURRENT}")
-        echo "Fast-forward branch '${CURRENT}' to '${UPSTREAM}'"
-        git merge --ff-only "${UPSTREAM}" || true
+        if [ -n "${UPSTREAM}" ]; then
+                echo "Fast-forward branch '${CURRENT}' to '${UPSTREAM}'"
+                git merge --ff-only "${UPSTREAM}" || true
+        fi
 fi
 
 echo "git trim"
