@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REMOTE=$(git remote | head -n 1)
+if [ -z "$REMOTE" ]; then
+	echo "No remote"
+	exit -1
+fi
+
+BASE=$(git symbolic-ref --short "refs/remotes/$REMOTE/HEAD" || true)
+if [ -z "$BASE" ]; then
+	REMOTE_HEAD=$(git remote show "$REMOTE" | sed -n 's/\s*HEAD branch: //p')
+	echo "Retry after setting default default base branch for $REMOTE:"
+	echo "  git symbolic-ref refs/remotes/$REMOTE/HEAD refs/remotes/$REMOTE/$REMOTE_HEAD"
+	exit -1
+fi
+
+check_no_uncommited_changes() {
+	if ! ( git diff --quiet || git diff --quiet --cached ); then
+		echo "You have uncommited changes"
+		git status
+		exit -1;
+	fi
+}
+
+git_scratch() {
+	check_no_uncommited_changes
+	git sync
+	git switch scratch || git switch -c scratch
+	git rebase -i "$BASE"
+}
+
+git_scratch_fork() {
+	local BRANCH="$1"
+	check_no_uncommited_changes
+	git switch -c "$BRANCH"
+	git rebase -i "$BASE"
+}
+
+if [ $# -eq 0 ]; then
+	git_scratch
+else
+	git_scratch_fork "$1"
+fi
