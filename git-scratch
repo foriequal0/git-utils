@@ -4,9 +4,9 @@
 ## Requires: (optional) git-sync
 ## Usage
 ##   git scratch
-##     Move back to the scratch branch
+##     Prepare a scratch branch
 ##   git scratch <branch name>
-##     Start cherry-picking commits from scratch branch
+##     Start cherry-picking commits from the scratch branch
 
 set -euo pipefail
 
