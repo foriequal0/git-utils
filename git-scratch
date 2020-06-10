@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+## git-scratch: An opionated git workflow for random walker.
+## Requires: (optional) git-sync
+## Usage
+##   git scratch
+##     Move back to the scratch branch
+##   git scratch <branch name>
+##     Start cherry-picking commits from scratch branch
+
 set -euo pipefail
 
 REMOTE=$(git remote | head -n 1)
@@ -26,7 +34,11 @@ check_no_uncommited_changes() {
 
 git_scratch() {
 	check_no_uncommited_changes
-	git sync
+	if which git-sync > /dev/null; then
+		git sync
+	else
+		git remote update "$REMOTE"
+	fi
 	git switch scratch || git switch -c scratch
 	git rebase -i "$BASE"
 }
@@ -34,6 +46,7 @@ git_scratch() {
 git_scratch_fork() {
 	local BRANCH="$1"
 	check_no_uncommited_changes
+	git switch scratch
 	git switch -c "$BRANCH"
 	git rebase -i "$BASE"
 }
