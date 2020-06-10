@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# git-sync: pull, prune, trim all branches.
+# requires: (optional) git-trim
+
 set -euo pipefail
 
 CURRENT=$(git branch --show-current)
@@ -44,5 +47,7 @@ if [ -n "${CURRENT}" ]; then
         fi
 fi
 
-echo "git trim"
-git trim --no-update
+if which git-trim >/dev/null; then
+        echo "git trim"
+        git trim --no-update
+fi
