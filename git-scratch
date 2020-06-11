@@ -25,7 +25,7 @@ if [ -z "$BASE" ]; then
 fi
 
 check_no_uncommited_changes() {
-	if ! ( git diff --quiet || git diff --quiet --cached ); then
+	if ! ( git diff --quiet && git diff --quiet --cached ); then
 		echo "You have uncommited changes"
 		git status
 		exit -1;
