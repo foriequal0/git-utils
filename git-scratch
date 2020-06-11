@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## git-scratch: An opionated git workflow for random walker.
+## git-scratch: An opinionated git workflow for random walker.
 ## Requires: (optional) git-sync
 ## Usage
 ##   git scratch
