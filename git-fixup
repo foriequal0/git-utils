@@ -30,4 +30,4 @@ select-commit() {
 FIXUP=$(echo "${COMMITS}" | select-commit "${COMMITS}")
 
 git commit --fixup "${FIXUP}"
-git rebase -i --autosquash --autostash --keep-base "${BASE}"
+git rebase -i --autosquash --autostash --onto "$BASE"... "$BASE"
