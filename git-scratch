@@ -40,7 +40,11 @@ git_scratch() {
 		git remote update "$REMOTE"
 	fi
 	git switch scratch || git switch -c scratch
-	git rebase -i "$BASE"
+	local MERGE_BASE=$(git merge-base HEAD "$BASE")
+	local BASE_REF=$(git rev-parse "$BASE")
+	if [ "$MERGE_BASE" != "$BASE_REF" ]; then
+		git rebase -i "$BASE"
+	fi
 }
 
 git_scratch_fork() {
