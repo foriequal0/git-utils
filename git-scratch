@@ -24,16 +24,7 @@ if [ -z "$BASE" ]; then
 	exit -1
 fi
 
-check_no_uncommited_changes() {
-	if ! ( git diff --quiet && git diff --quiet --cached ); then
-		echo "You have uncommited changes"
-		git status
-		exit -1;
-	fi
-}
-
 git_scratch() {
-	check_no_uncommited_changes
 	if which git-sync > /dev/null; then
 		git sync
 	else
@@ -43,16 +34,15 @@ git_scratch() {
 	local MERGE_BASE=$(git merge-base HEAD "$BASE")
 	local BASE_REF=$(git rev-parse "$BASE")
 	if [ "$MERGE_BASE" != "$BASE_REF" ]; then
-		git rebase -i "$BASE"
+		git rebase --autostash -i "$BASE"
 	fi
 }
 
 git_scratch_fork() {
 	local BRANCH="$1"
-	check_no_uncommited_changes
 	git switch scratch
 	git switch -c "$BRANCH"
-	git rebase -i "$BASE"
+	git rebase --autostash -i "$BASE"
 }
 
 if [ $# -eq 0 ]; then
