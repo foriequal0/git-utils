@@ -43,6 +43,7 @@ git_scratch_fork() {
 	git switch scratch
 	git switch -c "$BRANCH"
 	git rebase --autostash -i "$BASE"
+	git push -u "$REMOTE" "$BRANCH"
 }
 
 if [ $# -eq 0 ]; then
