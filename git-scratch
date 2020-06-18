@@ -20,7 +20,7 @@ BASE=$(git symbolic-ref --short "refs/remotes/$REMOTE/HEAD" || true)
 if [ -z "$BASE" ]; then
 	REMOTE_HEAD=$(git remote show "$REMOTE" | sed -n 's/\s*HEAD branch: //p')
 	echo "Retry after setting default default base branch for $REMOTE:"
-	echo "  git symbolic-ref refs/remotes/$REMOTE/HEAD refs/remotes/$REMOTE/$REMOTE_HEAD"
+	echo "  git remote set-head $REMOTE --auto"
 	exit -1
 fi
 
