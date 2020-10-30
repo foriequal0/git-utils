@@ -25,11 +25,6 @@ if [ -z "$BASE" ]; then
 fi
 
 git_scratch() {
-	if which git-sync > /dev/null; then
-		git sync
-	else
-		git remote update "$REMOTE"
-	fi
 	git switch scratch || git switch -c scratch
 	local MERGE_BASE=$(git merge-base HEAD "$BASE")
 	local BASE_REF=$(git rev-parse "$BASE")
@@ -45,6 +40,12 @@ git_scratch_fork() {
 	git rebase --autostash -i "$BASE"
 	git push -u "$REMOTE" "$BRANCH"
 }
+
+if which git-sync > /dev/null; then
+	git sync
+else
+	git remote update "$REMOTE"
+fi
 
 if [ $# -eq 0 ]; then
 	git_scratch
