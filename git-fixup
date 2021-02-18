@@ -27,7 +27,7 @@ get-base() {
         return 1
 }
 
-BASE=$1
+BASE=${1:-}
 if [ -z "$BASE" ]; then
         BASE=$(get-base)
 fi
