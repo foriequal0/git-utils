@@ -31,6 +31,7 @@ BASE=${1:-}
 if [ -z "$BASE" ]; then
         BASE=$(get-base)
 fi
+BASE=$(git rev-parse "$BASE")
 
 if git diff --cached --quiet; then
         echo "Empty index"
