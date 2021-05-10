@@ -5,7 +5,7 @@
 set -euo pipefail
 
 OPTS_SPEC="\
-$0 [<options>] <args>...
+$0 [<branch-name>] [<options>]
 
 An opinionated git workflow for random walker.
 --
