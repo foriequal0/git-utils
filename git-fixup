@@ -34,8 +34,8 @@ fi
 BASE=$(git rev-parse "$BASE")
 
 if git diff --cached --quiet; then
-        echo "Empty index"
-        exit -1
+        git rebase -i --autosquash --autostash --onto "$BASE"... "$BASE"
+        exit
 fi
 
 CURRENT=$(git branch --show-current)
