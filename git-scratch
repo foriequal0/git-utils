@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+## Requires: (optional) git-sync
+
+set -euo pipefail
+
+OPTS_SPEC="\
+$0 [<branch-name>] [<options>]
+
+An opinionated git workflow for random walker.
+--
+h,help    show the help
+
+r,remote!=remote  remote name
+b,base!=branch    remote base branch name
+"
+
+eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+
+REMOTE=$(git remote | head -n 1)
+BASE=
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-r|--remote) REMOTE=$2; shift 2 ;;
+	-b|--base) BASE=$2; shift 2 ;;
+	--) shift; break ;;
+	*) >&2 echo "Unexpected option: $1"; exit 1;
+	esac
+done
+
+if [ -z "$REMOTE" ]; then
+	>&2 echo "No remote"
+	exit -1
+fi
+
+if [ -n "$BASE" ]; then
+	BASE="refs/remotes/$REMOTE/$BASE"
+else
+	BASE=$(git symbolic-ref "refs/remotes/$REMOTE/HEAD" || true)
+fi
+
+if [ -z "$BASE" ]; then
+	REMOTE_HEAD=$(git remote show "$REMOTE" | sed -n 's/\s*HEAD branch: //p')
+	>&2 echo "Retry after setting default default base branch for $REMOTE:"
+	>&2 echo "  git remote set-head $REMOTE --auto"
+	exit -1
+fi
+
+git_scratch() {
+	git switch scratch || git switch -c scratch
+	local MERGE_BASE=$(git merge-base HEAD "$BASE")
+	local BASE_REF=$(git rev-parse "$BASE")
+	if [ "$MERGE_BASE" != "$BASE_REF" ]; then
+		git rebase --autostash -i "$BASE"
+	fi
+}
+
+git_scratch_fork() {
+	local BRANCH="$1"
+	git switch scratch
+	git switch -c "$BRANCH"
+	git rebase --autostash -i "$BASE"
+	git push -u "$REMOTE" "$BRANCH"
+}
+
+if which git-sync > /dev/null; then
+	git sync
+else
+	git remote update "$REMOTE"
+fi
+
+if [ $# -eq 0 ]; then
+	git_scratch
+else
+	git_scratch_fork "$1"
+fi
