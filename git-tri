@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# git-tri: sets up the triangular workflow.
+# Pull from 'upstream', push to 'origin'.
+        
+help() {
+        echo "git tri check"
+        echo "git tri enable [BRANCH]"
+}
+set -euo pipefail
+
+check() {
+        local -r UPSTREAM=$(git config remote.upstream.url || true)
+        local -r ORIGIN=$(git config remote.origin.url || true)
+        if [ -z "$UPSTREAM" -o -z "$ORIGIN" ]; then
+                2>&1 echo "Remote 'upstream' and 'origin' should be configured."
+                2>&1 echo "upstream: $UPSTREAM"
+                2>&1 echo "origin: $ORIGIN"
+                return 1
+        fi
+}
+
+enable() {
+        check
+
+        local -r BRANCH=${1:-$(git branch --show)}
+        if [ -z "$BRANCH" ]; then
+                2>&1 echo "you should be on a branch."
+                return 1
+        fi
+
+        git config set branch."$BRANCH".remote upstream
+        git config set branch."$BRANCH".pushRemote origin
+
+        echo "Branch '$BRANCH' will pushed to 'origin' and pulled from 'upstream'."
+}
+
+readonly SUBCOMMAND=${1:-}
+case "$SUBCOMMAND" in
+        help|check|enable)
+                shift
+                "${SUBCOMMAND}" "$@"
+                ;;
+        *)
+                2>&1 echo "Unknown subcommand: '$SUBCOMMAND'"
+                2>&1 help
+                exit 1
+                ;;
+esac
