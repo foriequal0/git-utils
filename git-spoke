@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+# git-spoke: hub-and-spoke model fork management with triangular wokflow in mind.
+# 'upstream' is the hub, the local repo is a spoke.
+# 'origin' is the backup of the spoke on the hub. (triangular wokflow)
+#
+# useful for following scenario
+# 
+# Public (GitHub)
+#  ^ v
+#  Hub   (workstation)
+#  ^ v
+# Spoke  (laptop)
+
+set -euo pipefail
+
+help() {
+        echo "git spoke connect [NAME]"
+        echo "git spoke disconnect"
+}
+
+connect() {
+        local NAME=$(git config get spoke.name || true)
+        if [ -n "$NAME" ]; then
+                2>&1 echo "Already connected as '$NAME'."
+                exit 1
+        fi
+
+        local -r ORIGIN=$(git config get remote.origin.url || true)
+        if [ -z "$ORIGIN" ]; then
+                2>&1 echo "Remote 'origin' should be configured."
+                exit 1
+        fi
+
+        local -r UPSTREAM=$(git config get remote.upstream.url || true)
+        if [ -z "$UPSTREAM" ]; then
+                echo "Duplicating remote 'origin' to 'upstream'."
+                git remote rename origin upstream
+                git remote add origin "$ORIGIN"
+        fi
+
+        NAME=${1:-$(hostname)}
+        local -r REMOTE_REF_PREFIX=refs/heads/spokes
+
+        echo "All branches on this clone will be pushed under remote's '$REMOTE_REF_PREFIX/$NAME/'."
+        git config set remote.origin.push "+refs/heads/*:$REMOTE_REF_PREFIX/$NAME/*"
+        git config set spoke.name "$NAME"
+
+        echo "git push origin"
+        git push origin
+}
+
+disconnect() {
+        local -r NAME=$(git config get spoke.name || true)
+        if [ -z "$NAME" ]; then
+                echo "Not initialized"
+                return 1
+        fi
+        local -r REMOTE_REF_PREFIX=refs/heads/spokes
+
+        echo "Removing all refs under '$REMOTE_REF_PREFIX/$NAME/' on 'origin'."
+        git ls-remote --refs --no-tags origin "$REMOTE_REF_PREFIX/$NAME"/'*' \
+                | awk '{print $2}' \
+                | xargs --no-run-if-empty git push --atomic --delete origin
+
+        echo "Reverting 'origin' from 'upstream'."
+        git remote remove origin
+        git remote rename upstream origin
+        git config remove-section spoke
+}
+
+readonly SUBCOMMAND=${1:-}
+case "$SUBCOMMAND" in
+        help|connect|disconnect)
+                shift
+                "$SUBCOMMAND" "$@"
+                ;;
+        *)
+                2>&1 echo "Unknown subcommand: $SUBCOMMAND"
+                2>&1 help
+                exit 1
+                ;;
+esac
